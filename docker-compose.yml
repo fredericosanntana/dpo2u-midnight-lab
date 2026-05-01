@@ -1,0 +1,72 @@
+services:
+  midnight-node:
+    image: midnightntwrk/midnight-node:0.21.0
+    container_name: midnight-standalone-node
+    ports:
+      - "9944:9944"
+    environment:
+      CFG_PRESET: "dev"
+    restart: unless-stopped
+    mem_limit: 6g
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9944/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  indexer:
+    image: midnightntwrk/indexer-standalone:4.0.0-rc.4
+    container_name: midnight-standalone-indexer
+    ports:
+      - "8088:8088"
+    volumes:
+      - indexer-data:/data
+      - ./indexer-config.yaml:/opt/indexer-standalone/config.yaml:ro
+    depends_on:
+      midnight-node:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "perl", "-e", "use IO::Socket::INET; my $$s = IO::Socket::INET->new(PeerAddr=>'127.0.0.1', PeerPort=>8088, Timeout=>5) or die; close $$s;"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Proof server runs from dpo2u-wallet compose (port 6300)
+  # To start standalone: docker compose --profile full up -d
+  proof-server:
+    image: midnightntwrk/proof-server:7.0.0
+    container_name: midnight-standalone-proof-server
+    profiles: ["full"]
+    ports:
+      - "6300:6300"
+    command: ["midnight-proof-server", "-v"]
+    restart: unless-stopped
+    mem_limit: 2g
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:6300/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  indexer-data:

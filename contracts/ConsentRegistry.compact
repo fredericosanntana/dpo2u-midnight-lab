@@ -49,7 +49,7 @@ export circuit grantConsent(
 // Revoke ALL consent for a data subject (LGPD Art. 8 §5 — must be as easy as granting).
 // Sets status=2, clears purposes. Record is retained for audit (revocation is itself an event).
 export circuit revokeConsent(subject_id: Bytes<32>): [] {
-  assert consent_status.member(disclose(subject_id)), "No consent record found for this subject";
+  assert(consent_status.member(disclose(subject_id)), "No consent record found for this subject");
   consent_status.insert(disclose(subject_id), disclose(2 as Uint<8>));
   consent_purposes.insert(disclose(subject_id), disclose(0 as Uint<8>));
   total_revocations.increment(1);
@@ -62,7 +62,7 @@ export circuit updateConsentPurposes(
   new_purposes: Uint<8>,
   policy_version: Uint<8>
 ): [] {
-  assert consent_status.member(disclose(subject_id)), "No consent record found for this subject";
+  assert(consent_status.member(disclose(subject_id)), "No consent record found for this subject");
   assert(new_purposes > 0 as Uint<8>, "Must keep at least one purpose; use revokeConsent to fully revoke");
   assert(policy_version > 0 as Uint<8>, "Policy version must be specified");
   consent_status.insert(disclose(subject_id), disclose(1 as Uint<8>));

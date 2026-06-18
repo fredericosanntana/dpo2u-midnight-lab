@@ -380,10 +380,10 @@ async function runDemo(contract: any, deployBlock: number) {
   const actorAnalyst = createHash('sha256').update('analyst-system-id-001').digest();
   const actorDPO = createHash('sha256').update('dpo-officer-id-002').digest();
 
-  // Block numbers simulate a timeline of events (Uint<16> max = 65535)
+  // Block numbers simulate a timeline of events (Uint<32>: no practical ceiling).
   // In standalone: these can be set to low values for immediate testing.
   // In preprod/preview: use the actual current block height.
-  const baseBlock = (deployBlock + 1) & 0xFFFF;  // clamp to Uint<16>
+  const baseBlock = deployBlock + 1;
 
   console.log(`\n  Controller: sha256("${controllerName}")`);
   console.log(`  Base block: ${baseBlock}\n`);

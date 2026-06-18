@@ -11,9 +11,8 @@ import CompactStandardLibrary;
 //   - controller_id: Bytes<32> hash of the data controller's DID or registration number.
 //   - actor_id: Bytes<32> hash of the actor (employee, system, third-party) performing the action.
 //     Both IDs are hashed — no PII on-chain.
-//   - block_number: Uint<16> block height at time of event (external timestamp reference).
-//     Use Uint<16> for Compact arithmetic safety; supports blocks up to 65535 (≈ 45 days at 1 block/min).
-//     For longer-lived deployments, pass modular block chunks or use a separate time oracle.
+//   - block_number: Uint<32> block height at time of event (external timestamp reference).
+//     Supports blocks up to 4,294,967,295 (≈ 8,171 years at 1 block/min) — no practical ceiling.
 //
 // EVENT TYPE CODES (Uint<8>):
 //   1 = data_collection          (new personal data received)
@@ -39,11 +38,11 @@ export ledger breach_events: Counter;
 export circuit logEvent(
   controller_id: Bytes<32>,
   event_type: Uint<8>,
-  block_number: Uint<16>
+  block_number: Uint<32>
 ): [] {
   assert(event_type > 0 as Uint<8>, "Invalid event type: must be 1-9");
   assert(event_type <= 9 as Uint<8>, "Unknown event type: must be 1-9");
-  assert(block_number > 0 as Uint<16>, "Block number required for audit timestamp");
+  assert(block_number > 0 as Uint<32>, "Block number required for audit timestamp");
 
   const prev = events_by_controller.lookup(disclose(controller_id));
   events_by_controller.insert(disclose(controller_id), disclose(prev + 1 as Uint<64>));
@@ -57,9 +56,9 @@ export circuit logEvent(
 export circuit logDeletionRequest(
   controller_id: Bytes<32>,
   actor_id: Bytes<32>,
-  block_number: Uint<16>
+  block_number: Uint<32>
 ): [] {
-  assert(block_number > 0 as Uint<16>, "Block number required");
+  assert(block_number > 0 as Uint<32>, "Block number required");
 
   const prev = events_by_controller.lookup(disclose(controller_id));
   events_by_controller.insert(disclose(controller_id), disclose(prev + 1 as Uint<64>));
@@ -74,9 +73,9 @@ export circuit logDeletionRequest(
 export circuit confirmDeletion(
   controller_id: Bytes<32>,
   actor_id: Bytes<32>,
-  block_number: Uint<16>
+  block_number: Uint<32>
 ): [] {
-  assert(block_number > 0 as Uint<16>, "Block number required");
+  assert(block_number > 0 as Uint<32>, "Block number required");
 
   const prev = events_by_controller.lookup(disclose(controller_id));
   events_by_controller.insert(disclose(controller_id), disclose(prev + 1 as Uint<64>));
@@ -90,9 +89,9 @@ export circuit confirmDeletion(
 // Records event_type=9 and increments dedicated breach counter.
 export circuit logBreachEvent(
   controller_id: Bytes<32>,
-  block_number: Uint<16>
+  block_number: Uint<32>
 ): [] {
-  assert(block_number > 0 as Uint<16>, "Block number required");
+  assert(block_number > 0 as Uint<32>, "Block number required");
 
   const prev = events_by_controller.lookup(disclose(controller_id));
   events_by_controller.insert(disclose(controller_id), disclose(prev + 1 as Uint<64>));

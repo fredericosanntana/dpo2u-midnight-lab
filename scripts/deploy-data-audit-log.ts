@@ -308,6 +308,7 @@ async function configureProviders(
     // Bug 6: walletProvider required for private state sync
     privateStateProvider: levelPrivateStateProvider<typeof PRIVATE_STATE_ID>({
       privateStateStoreName: 'data-audit-log-private-state',
+      walletProvider: bridge,
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
     zkConfigProvider,

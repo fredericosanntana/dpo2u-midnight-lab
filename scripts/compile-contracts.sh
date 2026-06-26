@@ -129,7 +129,11 @@ compile_all() {
     if [ -f "$compact_file" ]; then
       local name
       name=$(basename "$compact_file" .compact)
-      compile_one "$name" && ((count++)) || ((failed++))
+      if compile_one "$name"; then
+        count=$((count + 1))
+      else
+        failed=$((failed + 1))
+      fi
     fi
   done
 

@@ -2,7 +2,7 @@
 # compile-contracts.sh — Compile all Compact contracts in lab/contracts/
 #
 # Applies WORKAROUND-GUIDE Bug 1 fix: ensures compactc symlinks exist before compiling.
-# Requires: compactc 0.29.0 installed via compact installer
+# Requires: compactc 0.31.0 installed via compact installer
 #
 # Usage:
 #   ./scripts/compile-contracts.sh [--contract <name>]
@@ -13,7 +13,7 @@
 
 set -euo pipefail
 
-COMPACT_VERSION="0.29.0"
+COMPACT_VERSION="0.31.0"
 COMPACT_BIN_DIR="$HOME/.compact/bin"
 COMPACT_MUSL_DIR="$HOME/.compact/versions/$COMPACT_VERSION/x86_64-unknown-linux-musl"
 CONTRACTS_DIR="$(cd "$(dirname "$0")/.." && pwd)/contracts"

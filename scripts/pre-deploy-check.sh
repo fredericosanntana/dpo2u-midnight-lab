@@ -200,9 +200,13 @@ else
   echo ""
   echo "  All checks passed. Ready to deploy:"
   echo ""
-  echo "    npx tsx scripts/deploy-consent-registry.ts --network $NETWORK --demo"
-  echo "    npx tsx scripts/deploy-data-audit-log.ts   --network $NETWORK --demo"
-  echo "    npx tsx scripts/deploy-data-subject-rights.ts --network $NETWORK --demo"
+  echo "    npx tsx scripts/deploy-all.ts --network $NETWORK"
+  echo ""
+  echo "  Then check live contract state:"
+  echo "    npx tsx scripts/status.ts --network $NETWORK --seed <seed>"
+  echo ""
+  echo "  Then run the full LGPD lifecycle demo:"
+  echo "    npx tsx scripts/interact-full-suite.ts --network $NETWORK --seed <seed>"
   echo ""
   exit 0
 fi

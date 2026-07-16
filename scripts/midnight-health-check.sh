@@ -8,6 +8,10 @@ STATE_DIR="/var/log/midnight-health"
 SEND_EMAIL="/root/DPO2U/03-Ferramentas/Scripts/social/send-email.sh"
 SHAREHOLDER="fredericosanntana@gmail.com"
 COMPOSE_DIR="/root/dpo2u-midnight-lab"
+PROOF_SERVER_VERSION="7.0.0"   # keep in sync with docker-compose.yml / scripts/pre-deploy-check.sh
+NODE_VERSION="0.21.0"          # keep in sync with docker-compose.yml
+INDEXER_VERSION="4.0.0-rc.4"   # keep in sync with docker-compose.yml (drift vs SDK-VERSION-MATRIX.md)
+LOCK_FILE="$COMPOSE_DIR/scripts/image-digests.lock"
 ERRORS=0
 
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$LOG"; }
@@ -75,16 +79,27 @@ else
     ERRORS=$((ERRORS + 1))
 fi
 
-# 4. Proof Server
+# 4. Proof Server — liveness AND version. A container from an unrelated
+# project can be squatting on :6300 and still answer /health with "ok"
+# (found in production 2026-07-07: dpo2u-midnight-self-funding's
+# proof-server:8.0.3 was the only thing listening on this port). Do NOT
+# restart_service here even on mismatch: a squatter isn't managed by
+# $COMPOSE_DIR, so restarting this stack's compose service wouldn't fix it.
 PROOF_HEALTH=$(curl -sf --max-time 10 http://localhost:6300/health 2>/dev/null)
 if [[ $? -eq 0 ]] && echo "$PROOF_HEALTH" | grep -q '"ok"'; then
-    log "OK: proof server respondendo"
+    PROOF_VERSION=$(curl -sf --max-time 10 http://localhost:6300/version 2>/dev/null | tr -d '[:space:]')
+    if [[ "$PROOF_VERSION" == "$PROOF_SERVER_VERSION" ]]; then
+        log "OK: proof server respondendo (version $PROOF_VERSION)"
+    else
+        log "FAIL: proof server on :6300 is version '${PROOF_VERSION:-unknown}', expected $PROOF_SERVER_VERSION -- likely a different project's container squatting on the port. Check: docker ps --filter publish=6300"
+        ERRORS=$((ERRORS + 1))
+    fi
 else
     log "FAIL: proof server nao responde"
     ERRORS=$((ERRORS + 1))
 fi
 
-# 5. Docker container health status
+# 5. Docker container health status + image tag drift vs docker-compose.yml
 for CONTAINER in midnight-standalone-node midnight-standalone-indexer; do
     STATUS=$(docker inspect --format '{{.State.Health.Status}}' "$CONTAINER" 2>/dev/null)
     if [[ "$STATUS" == "healthy" ]]; then
@@ -94,6 +109,43 @@ for CONTAINER in midnight-standalone-node midnight-standalone-indexer; do
         ERRORS=$((ERRORS + 1))
     fi
 done
+
+# Digest-pinned when possible (see scripts/pin-image-digest.sh and the
+# content/2026-07-08 tag-vs-digest gap): a tag is a mutable pointer, so a
+# tag-string match alone cannot detect a retag. If image-digests.lock has an
+# entry for this container, compare the content-addressed image ID instead.
+# This was previously only wired into pre-deploy-check.sh (the manual gate)
+# -- flagged 2026-07-12 as backwards, since this script is the one that
+# actually runs unattended via cron and pages the shareholder on failure.
+check_image_version() {
+    local container="$1" expected="$2"
+    local image
+    image=$(docker inspect --format '{{.Config.Image}}' "$container" 2>/dev/null)
+    [[ -z "$image" ]] && return  # missing container already reported above
+
+    local pinned_id
+    pinned_id=$(grep "^${container}=" "$LOCK_FILE" 2>/dev/null | cut -d= -f2-)
+    if [[ -n "$pinned_id" ]]; then
+        local current_id
+        current_id=$(docker inspect --format '{{.Image}}' "$container" 2>/dev/null)
+        if [[ "$current_id" == "$pinned_id" ]]; then
+            log "OK: $container image digest-pinned, matches $pinned_id"
+        else
+            log "FAIL: $container image ID drifted since pinning (now $current_id, pinned $pinned_id) even though tag '$image' is unchanged -- re-verify and re-pin: ./scripts/pin-image-digest.sh $container"
+            ERRORS=$((ERRORS + 1))
+        fi
+        return
+    fi
+
+    if [[ "$image" == *":$expected" ]]; then
+        log "OK: $container image tag = $expected (tag match only, not digest-pinned -- run ./scripts/pin-image-digest.sh $container)"
+    else
+        log "WARN: $container running '$image', expected tag $expected -- version drift vs docker-compose.yml"
+        ERRORS=$((ERRORS + 1))
+    fi
+}
+check_image_version midnight-standalone-node "$NODE_VERSION"
+check_image_version midnight-standalone-indexer "$INDEXER_VERSION"
 
 # === PREPROD (endpoints publicos) ===
 

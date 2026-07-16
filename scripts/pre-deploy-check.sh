@@ -16,11 +16,15 @@ set -uo pipefail
 # ---------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------
-COMPACT_VERSION="0.29.0"
+COMPACT_VERSION="0.31.0"  # keep in sync with scripts/compile-contracts.sh
+PROOF_SERVER_VERSION="7.0.0"  # keep in sync with docker-compose.yml / SDK-VERSION-MATRIX.md
+NODE_VERSION="0.21.0"  # keep in sync with docker-compose.yml
+INDEXER_VERSION="4.0.0-rc.4"  # keep in sync with docker-compose.yml (drift vs SDK-VERSION-MATRIX.md, see 2026-07-05 note)
 COMPACT_BIN="$HOME/.compact/bin/compactc"
 REQUIRED_NODE_MAJOR=22
 LAB_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="$LAB_DIR/build"
+LOCK_FILE="$LAB_DIR/scripts/image-digests.lock"
 CONTRACTS=("ConsentRegistry" "DataAuditLog" "DataSubjectRights")
 
 NETWORK="${NETWORK:-standalone}"
@@ -41,6 +45,65 @@ ok()   { echo "  [OK]   $1"; PASS=$((PASS + 1)); }
 fail() { echo "  [FAIL] $1"; FAIL=$((FAIL + 1)); }
 warn() { echo "  [WARN] $1"; }
 section() { echo ""; echo "--- $1 ---"; }
+
+# Checks proof-server liveness AND version — a port can be answered by an
+# unrelated project's container (version mismatch is otherwise silent, see
+# WORKAROUND-GUIDE.md CRITICAL RULE on mixing SDK/infra versions).
+check_proof_server() {
+  local label="$1"
+  if ! curl -sf --max-time 3 http://127.0.0.1:6300/health -o /dev/null 2>&1; then
+    fail "proof-server not responding on :6300 $label — start: docker run midnightntwrk/proof-server:$PROOF_SERVER_VERSION"
+    return
+  fi
+
+  local ps_version
+  ps_version=$(curl -sf --max-time 3 http://127.0.0.1:6300/version 2>&1 | tr -d '[:space:]')
+  if [ "$ps_version" = "$PROOF_SERVER_VERSION" ]; then
+    ok "proof-server responding on :6300 $label (version $ps_version)"
+  else
+    fail "proof-server on :6300 is version '$ps_version', expected $PROOF_SERVER_VERSION — likely a different project's container squatting on the port. Check: docker ps --filter publish=6300"
+  fi
+}
+
+# Checks a docker-compose container is running the expected image tag.
+# Closes the gap flagged in content/2026-07-03: the indexer check only tested
+# GraphQL liveness, never the version — same liveness-vs-version blind spot
+# as check_proof_server, but the indexer has no /version endpoint, so we
+# read the tag straight off the running container instead.
+#
+# A tag is a mutable pointer (content/2026-07-08): re-tagging different
+# content onto the same string passes this check silently. If the container
+# has been pinned via pin-image-digest.sh, prefer comparing the current
+# content-addressed image ID against the pinned one — that catches drift a
+# tag-string match cannot.
+check_docker_image_version() {
+  local container="$1" expected="$2" label="$3"
+  local image
+  image=$(docker inspect --format '{{.Config.Image}}' "$container" 2>/dev/null)
+  if [ -z "$image" ]; then
+    fail "$label container '$container' not running — check: docker ps -a --filter name=$container"
+    return
+  fi
+
+  local pinned_id
+  pinned_id=$(grep "^${container}=" "$LOCK_FILE" 2>/dev/null | cut -d= -f2-)
+  if [ -n "$pinned_id" ]; then
+    local current_id
+    current_id=$(docker inspect --format '{{.Image}}' "$container" 2>/dev/null)
+    if [ "$current_id" = "$pinned_id" ]; then
+      ok "$label — $image (digest-pinned, matches $pinned_id)"
+    else
+      fail "$label — image ID drifted since pinning (now $current_id, pinned $pinned_id) even though tag '$image' is unchanged — this is the tag-vs-digest gap from content/2026-07-08. Re-verify and re-pin: ./scripts/pin-image-digest.sh $container"
+    fi
+    return
+  fi
+
+  if [[ "$image" == *":$expected" ]]; then
+    ok "$label — $image (tag match only, not digest-pinned — run ./scripts/pin-image-digest.sh $container)"
+  else
+    fail "$label running '$image', expected tag $expected — version drift. Check docker-compose.yml vs SDK-VERSION-MATRIX.md"
+  fi
+}
 
 # ---------------------------------------------------------------
 # Main checks
@@ -148,16 +211,12 @@ if [ "$NETWORK" = "standalone" ]; then
     fi
 
     # Check proof-server (port 6300)
-    if curl -sf --max-time 3 http://127.0.0.1:6300/health -o /dev/null 2>&1; then
-      ok "proof-server responding on :6300"
-    else
-      fail "proof-server not responding on :6300 — check docker compose logs proof-server"
-    fi
+    check_proof_server "(standalone)"
 
-    # Check Docker image versions
+    # Check Docker image versions (exact tag per container, not just "a midnight image")
     echo ""
-    echo "  Docker container versions (expected: node 0.21.0, indexer 3.1.0, proof 7.0.0):"
-    docker ps --format "  {{.Image}}" 2>/dev/null | grep midnight || warn "No midnight containers running"
+    check_docker_image_version "midnight-standalone-node" "$NODE_VERSION" "midnight-node"
+    check_docker_image_version "midnight-standalone-indexer" "$INDEXER_VERSION" "indexer-standalone"
   fi
 
 elif [ "$NETWORK" = "preprod" ] || [ "$NETWORK" = "preview" ]; then
@@ -177,11 +236,7 @@ elif [ "$NETWORK" = "preprod" ] || [ "$NETWORK" = "preview" ]; then
   fi
 
   # Proof server is always local
-  if curl -sf --max-time 3 http://127.0.0.1:6300/health -o /dev/null 2>&1; then
-    ok "proof-server responding on :6300 (local)"
-  else
-    fail "proof-server not responding on :6300 — start: docker run midnightntwrk/proof-server:7.0.0"
-  fi
+  check_proof_server "($NETWORK, local)"
 fi
 
 # ----------- Summary -----------------------------------------

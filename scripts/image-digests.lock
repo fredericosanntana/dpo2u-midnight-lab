@@ -1,0 +1,20 @@
+# image-digests.lock — content-addressed image IDs pinned per container.
+#
+# Format: <container-name>=<docker image ID, e.g. sha256:...>
+#
+# A Docker image TAG (e.g. "0.21.0") is a mutable pointer — it can be
+# silently repointed to different content without the string ever changing.
+# The image ID reported by `docker inspect --format '{{.Image}}' <container>`
+# is content-addressed: it changes if and only if the underlying image
+# content the container was created from changes.
+#
+# Populate/update entries with: ./scripts/pin-image-digest.sh <container>
+# (or --all for every container listed in that script's ALL_CONTAINERS).
+#
+# Only pin a container AFTER verifying out-of-band that its current image is
+# the correct one (e.g. you just watched `docker compose up -d` pull it, or
+# checked the digest against midnightntwrk release notes).
+#
+# Missing/empty entry for a container = not yet pinned. Checks fall back to
+# tag-string comparison (weaker — see scripts/pre-deploy-check.sh and
+# scripts/midnight-health-check.sh) and label the result as such.

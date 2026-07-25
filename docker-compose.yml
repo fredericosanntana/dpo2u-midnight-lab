@@ -21,7 +21,7 @@ services:
         max-file: "3"
 
   indexer:
-    image: midnightntwrk/indexer-standalone:4.0.0-rc.4
+    image: midnightntwrk/indexer-standalone:3.1.0
     container_name: midnight-standalone-indexer
     ports:
       - "8088:8088"

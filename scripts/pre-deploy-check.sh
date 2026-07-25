@@ -19,7 +19,7 @@ set -uo pipefail
 COMPACT_VERSION="0.31.0"  # keep in sync with scripts/compile-contracts.sh
 PROOF_SERVER_VERSION="7.0.0"  # keep in sync with docker-compose.yml / SDK-VERSION-MATRIX.md
 NODE_VERSION="0.21.0"  # keep in sync with docker-compose.yml
-INDEXER_VERSION="4.0.0-rc.4"  # keep in sync with docker-compose.yml (drift vs SDK-VERSION-MATRIX.md, see 2026-07-05 note)
+INDEXER_VERSION="3.1.0"  # keep in sync with docker-compose.yml — preprod-safe per SDK-VERSION-MATRIX.md (fixed 2026-07-24, was 4.0.0-rc.4, a PREVIEW-tier tag mismatched against preprod node 0.21.0)
 COMPACT_BIN="$HOME/.compact/bin/compactc"
 REQUIRED_NODE_MAJOR=22
 LAB_DIR="$(cd "$(dirname "$0")/.." && pwd)"

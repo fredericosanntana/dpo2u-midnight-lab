@@ -10,7 +10,12 @@ SHAREHOLDER="fredericosanntana@gmail.com"
 COMPOSE_DIR="/root/dpo2u-midnight-lab"
 PROOF_SERVER_VERSION="7.0.0"   # keep in sync with docker-compose.yml / scripts/pre-deploy-check.sh
 NODE_VERSION="0.21.0"          # keep in sync with docker-compose.yml
-INDEXER_VERSION="4.0.0-rc.4"   # keep in sync with docker-compose.yml (drift vs SDK-VERSION-MATRIX.md)
+INDEXER_VERSION="3.1.0"        # keep in sync with docker-compose.yml / SDK-VERSION-MATRIX.md preprod table
+                                # (fixed 2026-08-05: this constant was never updated when
+                                # docker-compose.yml / pre-deploy-check.sh moved 4.0.0-rc.4 -> 3.1.0
+                                # on 2026-07-25, commit 1a8813e -- causing false WARN + shareholder
+                                # email alerts on every cron run since, despite the indexer running
+                                # the correct preprod-safe tag the whole time.)
 LOCK_FILE="$COMPOSE_DIR/scripts/image-digests.lock"
 ERRORS=0
 

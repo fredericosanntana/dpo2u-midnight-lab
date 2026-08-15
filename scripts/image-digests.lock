@@ -18,3 +18,5 @@
 # Missing/empty entry for a container = not yet pinned. Checks fall back to
 # tag-string comparison (weaker — see scripts/pre-deploy-check.sh and
 # scripts/midnight-health-check.sh) and label the result as such.
+midnight-standalone-node=sha256:499c8a8835ef391ac9f0fdb83d832000ebb3590b95ecd89e936cc141e3fae217
+midnight-standalone-indexer=sha256:c815f270dada85e8d6415d8a15075d00d61ea3090db84682288d2f51f1905bd8

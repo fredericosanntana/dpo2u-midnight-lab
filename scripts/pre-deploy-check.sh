@@ -154,6 +154,26 @@ else
   fail "compactc not found — install: npx @midnight-ntwrk/compact-installer@latest"
 fi
 
+# ----------- Version constant consistency ---------------------
+# Closes the class of bug behind content/2026-08-07: COMPACT_VERSION /
+# PROOF_SERVER_VERSION / NODE_VERSION / INDEXER_VERSION above are duplicated
+# by hand across this file, docker-compose.yml, midnight-health-check.sh and
+# compile-contracts.sh. A partial bump (fixed here, forgotten there) used to
+# go undetected until it fired false alerts in production. See
+# scripts/check-version-consistency.sh for the standalone check this reuses.
+section "Version Constant Consistency"
+CONSISTENCY_SCRIPT="$LAB_DIR/scripts/check-version-consistency.sh"
+if [ -x "$CONSISTENCY_SCRIPT" ]; then
+  if consistency_output=$("$CONSISTENCY_SCRIPT" 2>&1); then
+    ok "duplicated version constants agree across docker-compose.yml / scripts (see ./scripts/check-version-consistency.sh for detail)"
+  else
+    fail "duplicated version constants disagree — run ./scripts/check-version-consistency.sh for detail:"
+    echo "$consistency_output" | grep '^FAIL' | sed 's/^/    /'
+  fi
+else
+  warn "scripts/check-version-consistency.sh not found or not executable — skipping"
+fi
+
 # ----------- .npmrc check ------------------------------------
 section "npm Configuration"
 if [ -f "$LAB_DIR/.npmrc" ]; then

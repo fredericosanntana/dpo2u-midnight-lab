@@ -53,9 +53,44 @@ apply_bug1_fix() {
 }
 
 # ---------------------------------------------------------------
+# /tmp preflight: compactc writes a tempfile during compile/--version
+# (embed_target.c: maketempfile) and hits an unguarded assert() on a
+# short write instead of a readable error. On this VPS /tmp is a
+# shared tmpfs across every project — it hit 100% on 2026-08-24 and
+# aborted compactc with "Assertion failed: write(fd, contents, size)
+# == size", which in turn broke the Bash tool staging output on the
+# same tmpfs. See content/2026-08-25/article-compactc-enospc-debugging-diary.md.
+# ---------------------------------------------------------------
+TMP_MIN_FREE_KB=512000  # 500MB headroom
+
+check_tmp_space() {
+  local avail_kb
+  avail_kb=$(df -Pk /tmp 2>/dev/null | awk 'NR==2 {print $4}')
+
+  if [ -z "$avail_kb" ]; then
+    echo "WARNING: could not determine /tmp free space — skipping preflight check"
+    return
+  fi
+
+  if [ "$avail_kb" -lt "$TMP_MIN_FREE_KB" ]; then
+    echo ""
+    echo "ERROR: /tmp has only $((avail_kb / 1024))MB free (need >= $((TMP_MIN_FREE_KB / 1024))MB)."
+    echo "  compactc will abort with an unreadable assertion failure on ENOSPC"
+    echo "  instead of a normal error (2026-08-24 incident, see"
+    echo "  content/2026-08-25/article-compactc-enospc-debugging-diary.md)."
+    echo "  /tmp is VPS-shared infra — investigate before compiling, don't delete blindly:"
+    echo "    df -h /tmp && du -sh /tmp/* 2>/dev/null | sort -rh | head -20"
+    exit 1
+  fi
+
+  echo "[OK] /tmp free space: $((avail_kb / 1024))MB"
+}
+
+# ---------------------------------------------------------------
 # Verify compactc is available
 # ---------------------------------------------------------------
 check_compiler() {
+  check_tmp_space
   apply_bug1_fix
 
   if ! command -v compactc &>/dev/null; then

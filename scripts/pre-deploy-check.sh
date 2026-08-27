@@ -26,6 +26,7 @@ LAB_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="$LAB_DIR/build"
 LOCK_FILE="$LAB_DIR/scripts/image-digests.lock"
 CONTRACTS=("ConsentRegistry" "DataAuditLog" "DataSubjectRights")
+TMP_MIN_FREE_KB=512000  # 500MB — keep in sync with scripts/compile-contracts.sh
 
 NETWORK="${NETWORK:-standalone}"
 while [[ $# -gt 0 ]]; do
@@ -130,6 +131,25 @@ fi
 
 # ----------- compactc version --------------------------------
 section "Compact Compiler"
+
+# /tmp preflight: compactc writes a tempfile during --version/compile
+# (embed_target.c: maketempfile) and hits an unguarded assert() on a short
+# write instead of a readable error. This gate already exists in
+# compile-contracts.sh (added 2026-08-25 after the 2026-08-24 incident,
+# see content/2026-08-25/article-compactc-enospc-debugging-diary.md) but
+# was missing here — this script calls `compactc --version` too, so the
+# same crash was reachable through this path unguarded. Check first so a
+# full /tmp fails loud and readable instead of surfacing as a cryptic
+# "version mismatch: got 'Assertion failed: write(fd, contents, size)...'"
+tmp_avail_kb=$(df -Pk /tmp 2>/dev/null | awk 'NR==2 {print $4}')
+if [ -z "$tmp_avail_kb" ]; then
+  warn "could not determine /tmp free space — skipping /tmp preflight"
+elif [ "$tmp_avail_kb" -lt "$TMP_MIN_FREE_KB" ]; then
+  fail "/tmp has only $((tmp_avail_kb / 1024))MB free (need >= $((TMP_MIN_FREE_KB / 1024))MB) — compactc will abort with an unreadable ENOSPC assertion. /tmp is VPS-shared infra — investigate before deploying, don't delete blindly: df -h /tmp && du -sh /tmp/* 2>/dev/null | sort -rh | head -20"
+else
+  ok "/tmp free space: $((tmp_avail_kb / 1024))MB"
+fi
+
 # Apply Bug 1 workaround: ensure PATH includes compact bin
 if [[ ":$PATH:" != *":$HOME/.compact/bin:"* ]]; then
   export PATH="$HOME/.compact/bin:$PATH"

@@ -97,6 +97,13 @@ check_constant "COMPACT_VERSION (compactc)" \
   "compile-contracts.sh=$cc_compile" \
   "pre-deploy-check.sh=$cc_predeploy"
 
+# --- TMP_MIN_FREE_KB (compactc /tmp preflight, content/2026-08-25 incident) ---
+tmp_compile=$(get_val scripts/compile-contracts.sh 'TMP_MIN_FREE_KB=[0-9]+' | cut -d= -f2)
+tmp_predeploy=$(get_val scripts/pre-deploy-check.sh 'TMP_MIN_FREE_KB=[0-9]+' | cut -d= -f2)
+check_constant "TMP_MIN_FREE_KB (/tmp preflight)" \
+  "compile-contracts.sh=$tmp_compile" \
+  "pre-deploy-check.sh=$tmp_predeploy"
+
 echo ""
 
 # --- Informational only: cross-check against the DNA repo's documented

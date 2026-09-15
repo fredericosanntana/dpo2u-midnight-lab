@@ -7,6 +7,7 @@
   },
   "scripts": {
     "compile": "bash scripts/compile-contracts.sh",
+    "check-versions": "bash scripts/check-version-consistency.sh",
     "predeploy": "bash scripts/pre-deploy-check.sh",
     "deploy:all": "tsx scripts/deploy-all.ts",
     "status": "tsx scripts/status.ts",

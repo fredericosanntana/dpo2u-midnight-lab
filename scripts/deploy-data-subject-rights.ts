@@ -23,7 +23,7 @@
  *
  * SDK Versions (PREPROD — SDK-VERSION-MATRIX.md):
  *   @midnight-ntwrk/midnight-js-*       3.0.0–3.1.0
- *   @midnight-ntwrk/wallet-sdk-facade   2.0.0  (WalletFacade.init API)
+ *   @midnight-ntwrk/wallet-sdk-facade   1.0.0  (new WalletFacade(...) + start() — SDK-VERSION-MATRIX.md)
  *   @midnight-ntwrk/ledger-v7           7.0.0
  *   @midnight-ntwrk/compact-runtime     0.14.0
  *   midnight-node Docker                0.21.0
@@ -33,7 +33,7 @@
  * CRITICAL RULES from WORKAROUND-GUIDE.md:
  *   - NEVER use npm.midnight.network (does not exist — Bug 2)
  *   - NEVER mix preprod/preview SDK versions (silent sync failures — Bug 3)
- *   - NEVER use wallet.signRecipe() — use WalletFacade.init + finalizeRecipe (Bug 5)
+ *   - NEVER use wallet.signRecipe() — use finalizeRecipe (Bug 5)
  *   - ALWAYS call setNetworkId() before any contract operation
  *   - ALWAYS add smoldot override to package.json (Bug 7)
  *
@@ -59,6 +59,7 @@ import { toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { CompiledContract, type ImpureCircuitId } from '@midnight-ntwrk/compact-js';
 
 import { WalletFacade } from '@midnight-ntwrk/wallet-sdk-facade';
+import { startWalletFacade } from './lib/wallet-facade.js';
 import { DustWallet } from '@midnight-ntwrk/wallet-sdk-dust-wallet';
 import { HDWallet, Roles, generateRandomSeed } from '@midnight-ntwrk/wallet-sdk-hd';
 import { ShieldedWallet } from '@midnight-ntwrk/wallet-sdk-shielded';
@@ -170,7 +171,7 @@ function deriveKeys(seed: string) {
 }
 
 // ------------------------------------------------------------------
-// Wallet initialization — WalletFacade.init() API (wallet-sdk-facade 2.0.0)
+// Wallet initialization — WalletFacade constructor + start() (wallet-sdk-facade 1.0.0) via lib/wallet-facade.ts
 // See SDK-VERSION-MATRIX.md for API differences between 1.0.0 and 2.0.0
 // ------------------------------------------------------------------
 async function buildWallet(config: NetworkConfig, seed: string) {
@@ -195,17 +196,7 @@ async function buildWallet(config: NetworkConfig, seed: string) {
   };
 
   console.log('[2/6] Initializing WalletFacade...');
-  const wallet = await WalletFacade.init({
-    configuration: walletConfig,
-    shielded: (cfg: any) => ShieldedWallet(cfg).startWithSecretKeys(shieldedSecretKeys),
-    unshielded: (cfg: any) => UnshieldedWallet(cfg).startWithPublicKey(
-      PublicKey.fromKeyStore(unshieldedKeystore),
-    ),
-    dust: (cfg: any) => DustWallet(cfg).startWithSecretKey(
-      dustSecretKey,
-      ledgerLib.LedgerParameters.initialParameters().dust,
-    ),
-  });
+  const wallet = await startWalletFacade(walletConfig, shieldedSecretKeys, dustSecretKey, unshieldedKeystore);
 
   return { wallet, shieldedSecretKeys, dustSecretKey, unshieldedKeystore, seed };
 }
@@ -568,7 +559,7 @@ async function main() {
     lgpdCoverage: ['Art. 18 I-IX (rights requests)', 'Art. 19 (15-day deadline)', 'Art. 18 §4 (rejection)'],
     sdkVersions: {
       'midnight-js': '3.0.0-3.1.0',
-      'wallet-sdk-facade': '2.0.0',
+      'wallet-sdk-facade': '1.0.0',
       'compact-runtime': '0.14.0',
       'ledger-v7': '7.0.0',
     },

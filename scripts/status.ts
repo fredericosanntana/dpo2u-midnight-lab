@@ -19,7 +19,7 @@
  *
  * SDK Versions (PREPROD/STANDALONE — SDK-VERSION-MATRIX.md):
  *   @midnight-ntwrk/midnight-js-*       3.0.0–3.1.0
- *   @midnight-ntwrk/wallet-sdk-facade   2.0.0  (WalletFacade.init API)
+ *   @midnight-ntwrk/wallet-sdk-facade   1.0.0  (new WalletFacade(...) + start() — SDK-VERSION-MATRIX.md)
  *   @midnight-ntwrk/ledger-v7           7.0.0
  *   @midnight-ntwrk/compact-runtime     0.14.0
  *
@@ -45,6 +45,7 @@ import { toHex } from '@midnight-ntwrk/midnight-js-utils';
 import { CompiledContract } from '@midnight-ntwrk/compact-js';
 
 import { WalletFacade } from '@midnight-ntwrk/wallet-sdk-facade';
+import { startWalletFacade } from './lib/wallet-facade.js';
 import { DustWallet } from '@midnight-ntwrk/wallet-sdk-dust-wallet';
 import { HDWallet, Roles, generateRandomSeed } from '@midnight-ntwrk/wallet-sdk-hd';
 import { ShieldedWallet } from '@midnight-ntwrk/wallet-sdk-shielded';
@@ -144,7 +145,7 @@ function deriveKeys(seed: string) {
 }
 
 // ------------------------------------------------------------------
-// Wallet init — WalletFacade.init() API (wallet-sdk-facade 2.0.0)
+// Wallet init — WalletFacade constructor + start() (wallet-sdk-facade 1.0.0) via lib/wallet-facade.ts
 // ------------------------------------------------------------------
 async function buildWallet(config: NetworkConfig, seed: string) {
   const keys = deriveKeys(seed);
@@ -160,17 +161,7 @@ async function buildWallet(config: NetworkConfig, seed: string) {
     costParameters: { additionalFeeOverhead: 300_000_000_000_000n, feeBlocksMargin: 5 },
   };
 
-  const wallet = await WalletFacade.init({
-    configuration: walletConfig,
-    shielded: (cfg: any) => ShieldedWallet(cfg).startWithSecretKeys(shieldedSecretKeys),
-    unshielded: (cfg: any) => UnshieldedWallet(cfg).startWithPublicKey(
-      PublicKey.fromKeyStore(unshieldedKeystore),
-    ),
-    dust: (cfg: any) => DustWallet(cfg).startWithSecretKey(
-      dustSecretKey,
-      ledgerLib.LedgerParameters.initialParameters().dust,
-    ),
-  });
+  const wallet = await startWalletFacade(walletConfig, shieldedSecretKeys, dustSecretKey, unshieldedKeystore);
 
   return { wallet, shieldedSecretKeys, dustSecretKey };
 }

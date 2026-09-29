@@ -303,7 +303,7 @@ async function deployOne(
     compiledContract,
     privateStateId,
     initialPrivateState: {} as EmptyPrivateState,
-  });
+  } as any);
 
   const { contractAddress, blockHeight, txId } = contract.deployTxData.public;
   console.log(`  Deployed! ✓`);
@@ -394,7 +394,7 @@ async function main() {
   // [1/5] Build wallet
   console.log('[1/5] Deriving HD keys and initializing WalletFacade...');
   const ctx = await buildWallet(config, seed);
-  const walletAddress = ctx.unshieldedKeystore.getBech32Address();
+  const walletAddress = ctx.unshieldedKeystore.getBech32Address().asString();
   console.log(`  Address: ${walletAddress}`);
 
   // [2/5] Sync

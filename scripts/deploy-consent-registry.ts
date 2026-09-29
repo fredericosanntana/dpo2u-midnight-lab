@@ -438,7 +438,7 @@ async function main() {
   console.log('  ⚠️  Save this seed to restore your wallet!\n');
 
   const ctx = await buildWallet(config, seed);
-  const addr = ctx.unshieldedKeystore.getBech32Address();
+  const addr = ctx.unshieldedKeystore.getBech32Address().asString();
   console.log(`  Address: ${addr}\n`);
 
   await waitForSync(ctx.wallet);

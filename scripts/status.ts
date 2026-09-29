@@ -346,7 +346,7 @@ async function main() {
     compiledContract: CompiledContract.make('ConsentRegistry', ConsentRegistry.Contract as any).pipe(
       CompiledContract.withVacantWitnesses,
       CompiledContract.withCompiledFileAssets(path.join(BUILD, 'ConsentRegistry')),
-    ),
+    ) as any,
     privateStateId: 'status-cr-ps' as any,
     initialPrivateState: emptyPrivateState,
   });
@@ -356,7 +356,7 @@ async function main() {
     compiledContract: CompiledContract.make('DataAuditLog', DataAuditLog.Contract as any).pipe(
       CompiledContract.withVacantWitnesses,
       CompiledContract.withCompiledFileAssets(path.join(BUILD, 'DataAuditLog')),
-    ),
+    ) as any,
     privateStateId: 'status-dal-ps' as any,
     initialPrivateState: emptyPrivateState,
   });
@@ -366,7 +366,7 @@ async function main() {
     compiledContract: CompiledContract.make('DataSubjectRights', DataSubjectRights.Contract as any).pipe(
       CompiledContract.withVacantWitnesses,
       CompiledContract.withCompiledFileAssets(path.join(BUILD, 'DataSubjectRights')),
-    ),
+    ) as any,
     privateStateId: 'status-dsr-ps' as any,
     initialPrivateState: emptyPrivateState,
   });

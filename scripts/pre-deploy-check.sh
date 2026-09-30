@@ -52,17 +52,20 @@ section() { echo ""; echo "--- $1 ---"; }
 # WORKAROUND-GUIDE.md CRITICAL RULE on mixing SDK/infra versions).
 check_proof_server() {
   local label="$1"
-  if ! curl -sf --max-time 3 http://127.0.0.1:6300/health -o /dev/null 2>&1; then
-    fail "proof-server not responding on :6300 $label — start: docker run midnightntwrk/proof-server:$PROOF_SERVER_VERSION"
+  # Same override the deploy/status scripts honor (PROOF_SERVER_URL), so the
+  # check probes the server the deploy will actually use.
+  local url="${PROOF_SERVER_URL:-http://127.0.0.1:6300}"
+  if ! curl -sf --max-time 3 "$url/health" -o /dev/null 2>&1; then
+    fail "proof-server not responding on $url $label — start: docker run midnightntwrk/proof-server:$PROOF_SERVER_VERSION"
     return
   fi
 
   local ps_version
-  ps_version=$(curl -sf --max-time 3 http://127.0.0.1:6300/version 2>&1 | tr -d '[:space:]')
+  ps_version=$(curl -sf --max-time 3 "$url/version" 2>&1 | tr -d '[:space:]')
   if [ "$ps_version" = "$PROOF_SERVER_VERSION" ]; then
-    ok "proof-server responding on :6300 $label (version $ps_version)"
+    ok "proof-server responding on $url $label (version $ps_version)"
   else
-    fail "proof-server on :6300 is version '$ps_version', expected $PROOF_SERVER_VERSION — likely a different project's container squatting on the port. Check: docker ps --filter publish=6300"
+    fail "proof-server on $url is version '$ps_version', expected $PROOF_SERVER_VERSION — likely a different project's container squatting on the port. Check: docker ps --filter publish=${url##*:} — or point PROOF_SERVER_URL at a $PROOF_SERVER_VERSION server"
   fi
 }
 

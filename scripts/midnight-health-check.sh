@@ -90,9 +90,10 @@ fi
 # proof-server:8.0.3 was the only thing listening on this port). Do NOT
 # restart_service here even on mismatch: a squatter isn't managed by
 # $COMPOSE_DIR, so restarting this stack's compose service wouldn't fix it.
-PROOF_HEALTH=$(curl -sf --max-time 10 http://localhost:6300/health 2>/dev/null)
+PROOF_URL="${PROOF_SERVER_URL:-http://localhost:6300}"   # same override as deploy scripts
+PROOF_HEALTH=$(curl -sf --max-time 10 "$PROOF_URL/health" 2>/dev/null)
 if [[ $? -eq 0 ]] && echo "$PROOF_HEALTH" | grep -q '"ok"'; then
-    PROOF_VERSION=$(curl -sf --max-time 10 http://localhost:6300/version 2>/dev/null | tr -d '[:space:]')
+    PROOF_VERSION=$(curl -sf --max-time 10 "$PROOF_URL/version" 2>/dev/null | tr -d '[:space:]')
     if [[ "$PROOF_VERSION" == "$PROOF_SERVER_VERSION" ]]; then
         log "OK: proof server respondendo (version $PROOF_VERSION)"
     else

@@ -1,7 +1,7 @@
 {
-  "compiler-version": "0.31.0",
-  "language-version": "0.23.0",
-  "runtime-version": "0.16.0",
+  "compiler-version": "0.29.0",
+  "language-version": "0.21.0",
+  "runtime-version": "0.14.0",
   "circuits": [
     {
       "name": "grantConsent",
@@ -168,61 +168,5 @@
   "witnesses": [
   ],
   "contracts": [
-  ],
-  "ledger": [
-    {
-      "name": "consent_status",
-      "index": 0,
-      "exported": true,
-      "storage": "Map",
-      "key": {
-        "type-name": "Bytes",
-        "length": 32
-      },
-      "value": {
-        "type-name": "Uint",
-        "maxval": 255
-      }
-    },
-    {
-      "name": "consent_purposes",
-      "index": 1,
-      "exported": true,
-      "storage": "Map",
-      "key": {
-        "type-name": "Bytes",
-        "length": 32
-      },
-      "value": {
-        "type-name": "Uint",
-        "maxval": 255
-      }
-    },
-    {
-      "name": "consent_policy_version",
-      "index": 2,
-      "exported": true,
-      "storage": "Map",
-      "key": {
-        "type-name": "Bytes",
-        "length": 32
-      },
-      "value": {
-        "type-name": "Uint",
-        "maxval": 255
-      }
-    },
-    {
-      "name": "total_consents_granted",
-      "index": 3,
-      "exported": true,
-      "storage": "Counter"
-    },
-    {
-      "name": "total_revocations",
-      "index": 4,
-      "exported": true,
-      "storage": "Counter"
-    }
   ]
 }

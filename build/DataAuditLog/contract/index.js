@@ -1,5 +1,5 @@
 import * as __compactRuntime from '@midnight-ntwrk/compact-runtime';
-__compactRuntime.checkRuntimeVersion('0.16.0');
+__compactRuntime.checkRuntimeVersion('0.14.0');
 
 const _descriptor_0 = new __compactRuntime.CompactTypeUnsignedInteger(18446744073709551615n, 8);
 
@@ -472,19 +472,6 @@ export class Contract {
       }
     };
     this.impureCircuits = {
-      logEvent: this.circuits.logEvent,
-      logDeletionRequest: this.circuits.logDeletionRequest,
-      confirmDeletion: this.circuits.confirmDeletion,
-      logBreachEvent: this.circuits.logBreachEvent,
-      getControllerEventCount: this.circuits.getControllerEventCount,
-      getLastEventType: this.circuits.getLastEventType,
-      getLastEventBlock: this.circuits.getLastEventBlock,
-      getTotalEvents: this.circuits.getTotalEvents,
-      getTotalDeletionRequests: this.circuits.getTotalDeletionRequests,
-      getTotalDeletionsConfirmed: this.circuits.getTotalDeletionsConfirmed,
-      getTotalBreachEvents: this.circuits.getTotalBreachEvents
-    };
-    this.provableCircuits = {
       logEvent: this.circuits.logEvent,
       logDeletionRequest: this.circuits.logDeletionRequest,
       confirmDeletion: this.circuits.confirmDeletion,

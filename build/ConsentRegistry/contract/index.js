@@ -1,5 +1,5 @@
 import * as __compactRuntime from '@midnight-ntwrk/compact-runtime';
-__compactRuntime.checkRuntimeVersion('0.16.0');
+__compactRuntime.checkRuntimeVersion('0.14.0');
 
 const _descriptor_0 = new __compactRuntime.CompactTypeUnsignedInteger(18446744073709551615n, 8);
 
@@ -360,16 +360,6 @@ export class Contract {
       }
     };
     this.impureCircuits = {
-      grantConsent: this.circuits.grantConsent,
-      revokeConsent: this.circuits.revokeConsent,
-      updateConsentPurposes: this.circuits.updateConsentPurposes,
-      getConsentStatus: this.circuits.getConsentStatus,
-      getConsentPurposes: this.circuits.getConsentPurposes,
-      getConsentPolicyVersion: this.circuits.getConsentPolicyVersion,
-      getTotalConsentsGranted: this.circuits.getTotalConsentsGranted,
-      getTotalRevocations: this.circuits.getTotalRevocations
-    };
-    this.provableCircuits = {
       grantConsent: this.circuits.grantConsent,
       revokeConsent: this.circuits.revokeConsent,
       updateConsentPurposes: this.circuits.updateConsentPurposes,

@@ -31,34 +31,6 @@ export type ImpureCircuits<PS> = {
   getTotalOverdue(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, bigint>;
 }
 
-export type ProvableCircuits<PS> = {
-  submitRequest(context: __compactRuntime.CircuitContext<PS>,
-                request_id_0: Uint8Array,
-                req_type_0: bigint,
-                submitted_block_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  fulfillRequest(context: __compactRuntime.CircuitContext<PS>,
-                 request_id_0: Uint8Array,
-                 resolved_block_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  rejectRequest(context: __compactRuntime.CircuitContext<PS>,
-                request_id_0: Uint8Array,
-                resolved_block_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  markRequestOverdue(context: __compactRuntime.CircuitContext<PS>,
-                     request_id_0: Uint8Array,
-                     current_block_0: bigint): __compactRuntime.CircuitResults<PS, []>;
-  getRequestStatus(context: __compactRuntime.CircuitContext<PS>,
-                   request_id_0: Uint8Array): __compactRuntime.CircuitResults<PS, bigint>;
-  getRequestType(context: __compactRuntime.CircuitContext<PS>,
-                 request_id_0: Uint8Array): __compactRuntime.CircuitResults<PS, bigint>;
-  getRequestSubmittedBlock(context: __compactRuntime.CircuitContext<PS>,
-                           request_id_0: Uint8Array): __compactRuntime.CircuitResults<PS, bigint>;
-  getRequestResolvedBlock(context: __compactRuntime.CircuitContext<PS>,
-                          request_id_0: Uint8Array): __compactRuntime.CircuitResults<PS, bigint>;
-  getTotalRequests(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, bigint>;
-  getTotalFulfilled(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, bigint>;
-  getTotalRejected(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, bigint>;
-  getTotalOverdue(context: __compactRuntime.CircuitContext<PS>): __compactRuntime.CircuitResults<PS, bigint>;
-}
-
 export type PureCircuits = {
 }
 
@@ -133,7 +105,6 @@ export declare class Contract<PS = any, W extends Witnesses<PS> = Witnesses<PS>>
   witnesses: W;
   circuits: Circuits<PS>;
   impureCircuits: ImpureCircuits<PS>;
-  provableCircuits: ProvableCircuits<PS>;
   constructor(witnesses: W);
   initialState(context: __compactRuntime.ConstructorContext<PS>): __compactRuntime.ConstructorResult<PS>;
 }

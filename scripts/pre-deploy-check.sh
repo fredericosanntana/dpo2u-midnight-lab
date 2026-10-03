@@ -16,11 +16,11 @@ set -uo pipefail
 # ---------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------
-COMPACT_VERSION="0.31.0"  # keep in sync with scripts/compile-contracts.sh
+COMPACT_VERSION="0.29.0"  # keep in sync with scripts/compile-contracts.sh
 PROOF_SERVER_VERSION="7.0.0"  # keep in sync with docker-compose.yml / SDK-VERSION-MATRIX.md
 NODE_VERSION="0.21.0"  # keep in sync with docker-compose.yml
 INDEXER_VERSION="3.1.0"  # keep in sync with docker-compose.yml — preprod-safe per SDK-VERSION-MATRIX.md (fixed 2026-07-24, was 4.0.0-rc.4, a PREVIEW-tier tag mismatched against preprod node 0.21.0)
-COMPACT_BIN="$HOME/.compact/bin/compactc"
+COMPACT_BIN="$HOME/.compact/versions/$COMPACT_VERSION/x86_64-unknown-linux-musl/compactc"  # versioned path: global symlink may point at another version
 REQUIRED_NODE_MAJOR=22
 LAB_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 BUILD_DIR="$LAB_DIR/build"
@@ -158,24 +158,30 @@ if [[ ":$PATH:" != *":$HOME/.compact/bin:"* ]]; then
   export PATH="$HOME/.compact/bin:$PATH"
 fi
 
-if command -v compactc &>/dev/null; then
-  cc_version=$(compactc --version 2>&1 | head -1)
+if [ -x "$COMPACT_BIN" ]; then
+  cc_version=$("$COMPACT_BIN" --version 2>&1 | head -1)
   if [[ "$cc_version" == *"$COMPACT_VERSION"* ]]; then
     ok "compactc $cc_version"
   else
     fail "compactc version mismatch: got '$cc_version', want $COMPACT_VERSION"
   fi
-elif [ -f "$COMPACT_BIN" ]; then
-  cc_version=$("$COMPACT_BIN" --version 2>&1 | head -1)
-  if [[ "$cc_version" == *"$COMPACT_VERSION"* ]]; then
-    warn "compactc found at $COMPACT_BIN but not in PATH — run Bug 1 fix from WORKAROUND-GUIDE"
-    PASS=$((PASS + 1))
-  else
-    fail "compactc at $COMPACT_BIN: version mismatch '$cc_version', want $COMPACT_VERSION"
-  fi
 else
-  fail "compactc not found — install: npx @midnight-ntwrk/compact-installer@latest"
+  fail "compactc $COMPACT_VERSION not found at $COMPACT_BIN — install: compact update $COMPACT_VERSION"
 fi
+
+# Compiled artifacts must target the compact-runtime installed in node_modules,
+# else every deploy script dies on import with "Version mismatch" (2026-10-02).
+rt_installed=$(node -p "require('$LAB_DIR/node_modules/@midnight-ntwrk/compact-runtime/package.json').version" 2>/dev/null || true)
+for c in "${CONTRACTS[@]}"; do
+  rt_built=$(grep -oE "checkRuntimeVersion\('[0-9.]+'" "$BUILD_DIR/$c/contract/index.js" 2>/dev/null | grep -oE "[0-9]+\.[0-9]+\.[0-9]+" || true)
+  if [ -z "$rt_built" ]; then
+    fail "$c: no compiled artifact — run npm run compile"
+  elif [ "$rt_built" != "$rt_installed" ]; then
+    fail "$c compiled for compact-runtime $rt_built, installed $rt_installed — recompile with compactc $COMPACT_VERSION"
+  else
+    ok "$c artifact targets compact-runtime $rt_built"
+  fi
+done
 
 # ----------- Version constant consistency ---------------------
 # Closes the class of bug behind content/2026-08-07: COMPACT_VERSION /

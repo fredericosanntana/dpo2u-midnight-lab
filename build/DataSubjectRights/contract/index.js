@@ -1,5 +1,5 @@
 import * as __compactRuntime from '@midnight-ntwrk/compact-runtime';
-__compactRuntime.checkRuntimeVersion('0.16.0');
+__compactRuntime.checkRuntimeVersion('0.14.0');
 
 const _descriptor_0 = new __compactRuntime.CompactTypeUnsignedInteger(18446744073709551615n, 8);
 
@@ -501,20 +501,6 @@ export class Contract {
       getTotalRejected: this.circuits.getTotalRejected,
       getTotalOverdue: this.circuits.getTotalOverdue
     };
-    this.provableCircuits = {
-      submitRequest: this.circuits.submitRequest,
-      fulfillRequest: this.circuits.fulfillRequest,
-      rejectRequest: this.circuits.rejectRequest,
-      markRequestOverdue: this.circuits.markRequestOverdue,
-      getRequestStatus: this.circuits.getRequestStatus,
-      getRequestType: this.circuits.getRequestType,
-      getRequestSubmittedBlock: this.circuits.getRequestSubmittedBlock,
-      getRequestResolvedBlock: this.circuits.getRequestResolvedBlock,
-      getTotalRequests: this.circuits.getTotalRequests,
-      getTotalFulfilled: this.circuits.getTotalFulfilled,
-      getTotalRejected: this.circuits.getTotalRejected,
-      getTotalOverdue: this.circuits.getTotalOverdue
-    };
   }
   initialState(...args_0) {
     if (args_0.length !== 1) {
@@ -997,8 +983,7 @@ export class Contract {
                        }
                        return t1;
                      })(submitted_0 + deadline_0);
-    let t_0;
-    __compactRuntime.assert((t_0 = current_block_0, t_0 >= expiry_0),
+    __compactRuntime.assert(current_block_0 >= expiry_0,
                             'LGPD Art. 19 15-day deadline not yet exceeded');
     const tmp_0 = 4n;
     __compactRuntime.queryLedgerState(context,

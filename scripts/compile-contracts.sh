@@ -2,7 +2,9 @@
 # compile-contracts.sh — Compile all Compact contracts in lab/contracts/
 #
 # Applies WORKAROUND-GUIDE Bug 1 fix: ensures compactc symlinks exist before compiling.
-# Requires: compactc 0.31.0 installed via compact installer
+# Requires: compactc 0.29.0 (SDK-VERSION-MATRIX preprod) — invoked by versioned path, because
+# the global ~/.compact/bin symlinks point at 0.31.0, whose output needs compact-runtime 0.16.0
+# (package.json pins 0.14.0 -> "Version mismatch" on import, found 2026-10-02).
 #
 # Usage:
 #   ./scripts/compile-contracts.sh [--contract <name>]
@@ -13,11 +15,12 @@
 
 set -euo pipefail
 
-COMPACT_VERSION="0.31.0"
+COMPACT_VERSION="0.29.0"
 COMPACT_BIN_DIR="$HOME/.compact/bin"
 COMPACT_MUSL_DIR="$HOME/.compact/versions/$COMPACT_VERSION/x86_64-unknown-linux-musl"
 CONTRACTS_DIR="$(cd "$(dirname "$0")/.." && pwd)/contracts"
 BUILD_DIR="$(cd "$(dirname "$0")/.." && pwd)/build"
+COMPACTC="$COMPACT_MUSL_DIR/compactc"
 
 echo "============================================================"
 echo "  DPO2U Lab — Compact Contract Compiler"
@@ -93,10 +96,10 @@ check_compiler() {
   check_tmp_space
   apply_bug1_fix
 
-  if ! command -v compactc &>/dev/null; then
+  if [ ! -x "$COMPACTC" ]; then
     echo ""
-    echo "ERROR: compactc not found. Install it first:"
-    echo "  npx @midnight-ntwrk/compact-installer@latest"
+    echo "ERROR: compactc $COMPACT_VERSION not found at $COMPACTC. Install it first:"
+    echo "  compact update $COMPACT_VERSION   (or npx @midnight-ntwrk/compact-installer@latest)"
     echo "  (then re-run this script to apply Bug 1 fix automatically)"
     echo ""
     echo "Required: compactc $COMPACT_VERSION"
@@ -104,7 +107,7 @@ check_compiler() {
   fi
 
   local version
-  version=$(compactc --version 2>&1 | head -1)
+  version=$("$COMPACTC" --version 2>&1 | head -1)
   echo "Compiler: $version"
 
   if [[ "$version" != *"$COMPACT_VERSION"* ]]; then
@@ -142,7 +145,7 @@ compile_one() {
   echo "  Source: $src"
   echo "  Output: $out"
 
-  if compactc "$src" "$out"; then
+  if "$COMPACTC" "$src" "$out"; then
     echo "  [OK] $name compiled successfully"
     # List generated artifacts
     echo "  Artifacts:"

@@ -107,20 +107,29 @@ check_constant "TMP_MIN_FREE_KB (/tmp preflight)" \
 echo ""
 
 # --- Informational only: cross-check against the DNA repo's documented
-# preprod table. Not a hard fail — compactc is a known, previously-accepted
-# drift (repo runs 0.31.0, DNA doc's preprod table says 0.29.0, logged in
-# logs/2026-08-06-dev.md). NODE/INDEXER/PROOF_SERVER should still match.
+# preprod table. Not a hard fail. Each constant prints OK or NOTE, and an
+# unparsed DNA value prints SKIP — silence must never mean "parse failed".
+# (compactc once drifted: repo 0.31.0 vs DNA 0.29.0, logs/2026-08-06-dev.md;
+# the repo is pinned back to 0.29.0 since 2026-10-03.)
 DNA_MATRIX="${DNA_REPO:-/root/dpo2u-midnight-agent-dna}/knowledge/SDK-VERSION-MATRIX.md"
 if [ -f "$DNA_MATRIX" ]; then
   echo "--- Informational: cross-check vs DNA repo's SDK-VERSION-MATRIX.md preprod table ---"
-  dna_node=$(get_val "$DNA_MATRIX" 'midnight-node \(Docker\) \| [0-9][^ ]*' | awk '{print $NF}')
-  dna_idx=$(get_val "$DNA_MATRIX" 'indexer-standalone \(Docker\) \| [0-9][^ ]*' | awk '{print $NF}')
-  dna_ps=$(get_val "$DNA_MATRIX" 'proof-server \(Docker\) \| [0-9][^ ]*' | awk '{print $NF}')
-  dna_cc=$(get_val "$DNA_MATRIX" 'compact compiler *\| [0-9][^ ]*' | awk '{print $NF}')
-  [ -n "$dna_node" ] && [ "$dna_node" != "$dc_node" ] && echo "  NOTE: NODE_VERSION repo=$dc_node vs DNA doc=$dna_node"
-  [ -n "$dna_idx" ] && [ "$dna_idx" != "$dc_idx" ] && echo "  NOTE: INDEXER_VERSION repo=$dc_idx vs DNA doc=$dna_idx"
-  [ -n "$dna_ps" ] && [ "$dna_ps" != "$dc_ps" ] && echo "  NOTE: PROOF_SERVER_VERSION repo=$dc_ps vs DNA doc=$dna_ps"
-  [ -n "$dna_cc" ] && [ "$dna_cc" != "$cc_compile" ] && echo "  NOTE: COMPACT_VERSION repo=$cc_compile vs DNA doc=$dna_cc (known accepted drift, see logs/2026-08-06-dev.md)"
+  dna_cross() {
+    # $1 = name, $2 = repo value, $3 = ERE for the matrix row
+    local dna
+    dna=$(get_val "$DNA_MATRIX" "$3" | awk '{print $NF}')
+    if [ -z "$dna" ]; then
+      echo "  SKIP: $1 -- could not parse DNA doc"
+    elif [ "$dna" = "$2" ]; then
+      echo "  OK:   $1 repo=$2 matches DNA doc"
+    else
+      echo "  NOTE: $1 repo=$2 vs DNA doc=$dna"
+    fi
+  }
+  dna_cross NODE_VERSION "$dc_node" 'midnight-node \(Docker\) \| [0-9][^ ]*'
+  dna_cross INDEXER_VERSION "$dc_idx" 'indexer-standalone \(Docker\) \| [0-9][^ ]*'
+  dna_cross PROOF_SERVER_VERSION "$dc_ps" 'proof-server \(Docker\) \| [0-9][^ ]*'
+  dna_cross COMPACT_VERSION "$cc_compile" 'compact compiler *\| [0-9][^ ]*'
   echo ""
 else
   echo "--- Informational cross-check skipped: DNA repo not found at $DNA_MATRIX ---"

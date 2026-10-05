@@ -67,6 +67,7 @@ import { CompiledContract, type ImpureCircuitId } from '@midnight-ntwrk/compact-
 
 import { WalletFacade } from '@midnight-ntwrk/wallet-sdk-facade';
 import { startWalletFacade } from './lib/wallet-facade.js';
+import { assertProofServerVersion } from './lib/proof-server.js';
 import { DustWallet } from '@midnight-ntwrk/wallet-sdk-dust-wallet';
 import { HDWallet, Roles, generateRandomSeed } from '@midnight-ntwrk/wallet-sdk-hd';
 import { ShieldedWallet } from '@midnight-ntwrk/wallet-sdk-shielded';
@@ -519,6 +520,7 @@ async function main() {
   console.log('');
 
   // CRITICAL: must call setNetworkId() before any contract operation
+  await assertProofServerVersion(config.proofServer);
   setNetworkId(config.networkId);
 
   const seed = values.seed ?? process.env.MIDNIGHT_SEED ?? toHex(Buffer.from(generateRandomSeed()));

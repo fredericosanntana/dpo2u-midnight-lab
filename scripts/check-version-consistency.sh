@@ -85,10 +85,12 @@ check_constant "INDEXER_VERSION (indexer-standalone)" \
 dc_ps=$(get_val docker-compose.yml 'midnightntwrk/proof-server:[0-9][^" '\''<>]*' | cut -d: -f2)
 pdc_ps=$(get_val scripts/pre-deploy-check.sh 'PROOF_SERVER_VERSION="[^"]+"' | cut -d'"' -f2)
 mhc_ps=$(get_val scripts/midnight-health-check.sh 'PROOF_SERVER_VERSION="[^"]+"' | cut -d'"' -f2)
+ts_ps=$(get_val scripts/lib/proof-server.ts "EXPECTED_PROOF_SERVER_VERSION = '[^']+'" | cut -d"'" -f2)
 check_constant "PROOF_SERVER_VERSION (proof-server)" \
   "docker-compose.yml=$dc_ps" \
   "pre-deploy-check.sh=$pdc_ps" \
-  "midnight-health-check.sh=$mhc_ps"
+  "midnight-health-check.sh=$mhc_ps" \
+  "lib/proof-server.ts=$ts_ps"
 
 # --- COMPACT_VERSION (compactc) ---
 cc_compile=$(get_val scripts/compile-contracts.sh 'COMPACT_VERSION="[^"]+"' | cut -d'"' -f2)

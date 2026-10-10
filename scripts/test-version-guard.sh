@@ -20,7 +20,9 @@ CASES=(
   "scripts/midnight-health-check.sh|s/INDEXER_VERSION=\"[^\"]*\"/INDEXER_VERSION=\"0.0.0-drift\"/"
   "scripts/midnight-health-check.sh|s/PROOF_SERVER_VERSION=\"[^\"]*\"/PROOF_SERVER_VERSION=\"0.0.0-drift\"/"
   "scripts/compile-contracts.sh|s/COMPACT_VERSION=\"[^\"]*\"/COMPACT_VERSION=\"0.0.0-drift\"/"
+  "docker-compose.yml|s#midnightntwrk/midnight-node:[0-9][^\" ]*#midnightntwrk/midnight-node:0.0.0-drift#"
   "docker-compose.yml|s#midnightntwrk/indexer-standalone:[0-9][^\" ]*#midnightntwrk/indexer-standalone:0.0.0-drift#"
+  "docker-compose.yml|s#midnightntwrk/proof-server:[0-9][^\" ]*#midnightntwrk/proof-server:0.0.0-drift#"
 )
 
 declare -A BACKUP

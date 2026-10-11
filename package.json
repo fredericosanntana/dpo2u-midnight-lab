@@ -7,6 +7,7 @@
   },
   "scripts": {
     "compile": "bash scripts/compile-contracts.sh",
+    "verify": "npm run compile && npm run typecheck && npm run check-versions && npm run test:guard",
     "check-versions": "bash scripts/check-version-consistency.sh",
     "test:guard": "bash scripts/test-version-guard.sh",
     "typecheck": "tsc --noEmit -p tsconfig.json",

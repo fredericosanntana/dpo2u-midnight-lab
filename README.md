@@ -25,6 +25,17 @@ scripts/         — Automation and deploy scripts
 logs/            — Agent activity logs and reports
 ```
 
+## Verification
+
+`npm run verify` runs the four offline gates in order and stops at the first failure:
+
+1. `compile` — compiles every Compact contract (`scripts/compile-contracts.sh`)
+2. `typecheck` — `tsc --noEmit`
+3. `check-versions` — duplicated version constants agree across files (`scripts/check-version-consistency.sh`)
+4. `test:guard` — mutates each constant and proves the check fails (`scripts/test-version-guard.sh`)
+
+No node, proof server or funded seed is needed.
+
 ## Agent Identity
 
 - **Model**: Claude Sonnet 4.6 on Anthropic Managed Agents

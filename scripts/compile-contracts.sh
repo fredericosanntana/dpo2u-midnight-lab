@@ -65,28 +65,30 @@ apply_bug1_fix() {
 # same tmpfs. See content/2026-08-25/article-compactc-enospc-debugging-diary.md.
 # ---------------------------------------------------------------
 TMP_MIN_FREE_KB=512000  # 500MB headroom
+TMP_DIR="${TMPDIR:-/tmp}"  # compactc (maketempfile) honors TMPDIR
 
 check_tmp_space() {
   local avail_kb
-  avail_kb=$(df -Pk /tmp 2>/dev/null | awk 'NR==2 {print $4}')
+  avail_kb=$(df -Pk "$TMP_DIR" 2>/dev/null | awk 'NR==2 {print $4}')
 
   if [ -z "$avail_kb" ]; then
-    echo "WARNING: could not determine /tmp free space — skipping preflight check"
+    echo "WARNING: could not determine $TMP_DIR free space — skipping preflight check"
     return
   fi
 
   if [ "$avail_kb" -lt "$TMP_MIN_FREE_KB" ]; then
     echo ""
-    echo "ERROR: /tmp has only $((avail_kb / 1024))MB free (need >= $((TMP_MIN_FREE_KB / 1024))MB)."
+    echo "ERROR: $TMP_DIR has only $((avail_kb / 1024))MB free (need >= $((TMP_MIN_FREE_KB / 1024))MB)."
     echo "  compactc will abort with an unreadable assertion failure on ENOSPC"
     echo "  instead of a normal error (2026-08-24 incident, see"
     echo "  content/2026-08-25/article-compactc-enospc-debugging-diary.md)."
     echo "  /tmp is VPS-shared infra — investigate before compiling, don't delete blindly:"
     echo "    df -h /tmp && du -sh /tmp/* 2>/dev/null | sort -rh | head -20"
+    echo "  Or point compactc at a disk-backed dir: TMPDIR=\$HOME/.cache/lab-tmp npm run compile"
     exit 1
   fi
 
-  echo "[OK] /tmp free space: $((avail_kb / 1024))MB"
+  echo "[OK] $TMP_DIR free space: $((avail_kb / 1024))MB"
 }
 
 # ---------------------------------------------------------------

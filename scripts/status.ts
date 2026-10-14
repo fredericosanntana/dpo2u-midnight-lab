@@ -284,8 +284,17 @@ async function main() {
     options: {
       network: { type: 'string', default: process.env.MIDNIGHT_NETWORK ?? 'standalone' },
       seed:    { type: 'string' },
+      help:    { type: 'boolean', short: 'h', default: false },
     },
   });
+
+  if (values.help) {
+    console.log(
+      'Usage: npx tsx scripts/status.ts [--network preprod|preview|standalone] [--seed <64-hex>]\n' +
+      'Read-only on-chain counter check for the deployed contracts. Network defaults to $MIDNIGHT_NETWORK or standalone.',
+    );
+    process.exit(0);
+  }
 
   const net = values.network ?? 'standalone';
   const config = NETWORKS[net];
